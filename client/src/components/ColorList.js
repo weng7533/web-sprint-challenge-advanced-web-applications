@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-
+import { axiosWithAuth } from '../axiosWithAuth ';
 const initialColor = {
   color: "",
   code: { hex: "" }
@@ -12,6 +12,7 @@ const ColorList = ({ colors, updateColors }) => {
   const [colorToEdit, setColorToEdit] = useState(initialColor);
 
   const editColor = color => {
+    console.log(color)
     setEditing(true);
     setColorToEdit(color);
   };
@@ -21,25 +22,43 @@ const ColorList = ({ colors, updateColors }) => {
     // Make a put request to save your updated color
     // think about where will you get the id from...
     // where is is saved right now?
+    axiosWithAuth()
+      .put(`http://localhost:5000/api/colors/${colorToEdit.id}`, colorToEdit)
+      .then(res => {
+        console.log('put succ', res);
+        axiosWithAuth().get('http://localhost:5000/api/colors').then(data => {
+          updateColors(data.data);
+        }).catch(err => console.log('get err', err));
+
+      })
+      .catch(err => console.log('err', err))
   };
 
   const deleteColor = color => {
     // make a delete request to delete this color
+    axiosWithAuth().delete(`http://localhost:5000/api/colors/${color.id}`)
+      .then(res => {
+        console.log('deleted succ', res)
+        axiosWithAuth().get('http://localhost:5000/api/colors').then(data => {
+          updateColors(data.data);
+        }).catch(err => console.log('get err', err));
+
+      }).catch(err => console.log('get err', err));
   };
 
   return (
-    <div className="colors-wrap">
+    <div className="colors-wrap" data-testid='ColorList'>
       <p>colors</p>
       <ul>
         {colors.map(color => (
           <li key={color.color} onClick={() => editColor(color)}>
             <span>
               <span className="delete" onClick={e => {
-                    e.stopPropagation();
-                    deleteColor(color)
-                  }
-                }>
-                  x
+                e.stopPropagation();
+                deleteColor(color)
+              }
+              }>
+                x
               </span>{" "}
               {color.color}
             </span>
